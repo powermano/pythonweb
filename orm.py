@@ -355,7 +355,7 @@ if __name__ == "__main__":
     # 创建实例
     @asyncio.coroutine
     def test():
-        yield from create_pool(loop=loop, host='localhost', port=3308, user='sly', password='070801382', db='test')
+        yield from create_pool(loop=loop, host='localhost', port=3306, user='ct', password='123456', db='test')
         user = User(id=8, name='sly', email='slysly759@gmail.com', password='fuckblog')
         yield from user.save()
         r = yield from User.find('11')
