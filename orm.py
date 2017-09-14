@@ -2,6 +2,8 @@ import sys
 import asyncio
 import logging
 
+__author__ = 'victory'
+
 logging.basicConfig(level=logging.INFO)
 # 一次使用异步 处处使用异步
 import aiomysql
@@ -89,7 +91,7 @@ def create_args_string(num):
     lol = []
     for n in range(num):
         lol.append('?')
-    return (','.join(lol))
+    return (','.join(lol)) # if num=3 the result is '?,?,?'  str.join(iterable)
 
 
 # 定义Field类，负责保存(数据库)表的字段名和字段类型
@@ -203,7 +205,7 @@ class ModelMetaclass(type):
         table_name, ', '.join(escaped_fields), primaryKey, create_args_string(len(escaped_fields) + 1))
         attrs['__update__'] = 'update `%s` set %s where `%s` = ?' % (
         table_name, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primaryKey)
-        attrs['__delete__'] = 'delete `%s` where `%s`=?' % (table_name, primaryKey)
+        attrs['__delete__'] = 'delete from `%s` where `%s`=?' % (table_name, primaryKey)
         return type.__new__(cls, name, bases, attrs)
 
 
@@ -296,7 +298,7 @@ class Model(dict, metaclass=ModelMetaclass):
         rs = yield from select('%s where `%s`=?' % (cls.__select__, cls.__primary_key__), [primarykey], 1)
         if len(rs) == 0:
             return None
-        return cls(**rs[0])
+        return cls(**rs[0])  #reuturn a User{}
 
     @classmethod
     @asyncio.coroutine
@@ -322,7 +324,7 @@ class Model(dict, metaclass=ModelMetaclass):
         if rows != 1:
             print(self.__insert__)
             logging.warning('failed to insert record: affected rows: %s' % rows)
-
+    #cursor.execute('insert into user (id, name) values (%s, %s)', ['1', 'Michael'])  tuple and list are the same ('1', 'Michael',) achieve the same effect
     @asyncio.coroutine
     # 显示方言错误是什么鬼。。。
     def update(self):
@@ -335,39 +337,41 @@ class Model(dict, metaclass=ModelMetaclass):
     @asyncio.coroutine
     def remove(self):
         args = [self.getValue(self.__primary_key__)]
-        rows = yield from execute(self.__updata__, args)
+        rows = yield from execute(self.__delete__, args)
         if rows != 1:
             logging.warning('failed to remove by primary key: affected rows: %s' % rows)
 
 
-if __name__ == "__main__":
-    class User(Model):
-        id = IntegerField('id', primary_key=True)
-        name = StringField('username')
-        email = StringField('email')
-        password = StringField('password')
-
-
-    # 创建异步事件的句柄
-    loop = asyncio.get_event_loop()
-
-
-    # 创建实例
-    @asyncio.coroutine
-    def test():
-        yield from create_pool(loop=loop, host='localhost', port=3306, user='ct', password='123456', db='test')
-        user = User(id=8, name='sly', email='slysly759@gmail.com', password='fuckblog')
-        yield from user.save()
-        r = yield from User.find('11')
-        print(r)
-        r = yield from User.findAll()
-        print(1, r)
-        r = yield from User.findAll(id='12')
-        print(2, r)
-        yield from destroy_pool()
-
-
-    loop.run_until_complete(test())
-    loop.close()
-    if loop.is_closed():
-        sys.exit(0)
+# if __name__ == "__main__":
+#     class User(Model):
+#         __table__ = 'users'
+#         id = IntegerField('id', primary_key=True)
+#         name = StringField('username')
+#         # email = StringField('email')
+#         # password = StringField('password')
+#
+#
+#
+#
+#
+#     # 创建实例
+#     @asyncio.coroutine
+#     def test():
+#         yield from create_pool(loop=loop, host='localhost', port=3306, user='ct', password='123456', db='test')
+#         # user = User(id=8, name='sly', email='slysly759@gmail.com', password='fuckblog')
+#         user = User(id=1, name='ct')
+#         yield from user.save()
+#         # r = yield from User.find('11')
+#         # print(r)
+#         # r = yield from User.findAll()
+#         # print(1, r)
+#         # r = yield from User.findAll(id='12')
+#         # print(2, r)
+#         # yield from destroy_pool()
+#
+#         # 创建异步事件的句柄
+#     loop = asyncio.get_event_loop()
+#     loop.run_until_complete(test())
+#     loop.close()
+#     if loop.is_closed():
+#         sys.exit(0)
