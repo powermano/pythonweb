@@ -76,6 +76,7 @@
 import orm
 from models import User, Blog, Comment
 import asyncio
+from conf.config import test1
 
 @asyncio.coroutine
 def test(loop):
